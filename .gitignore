@@ -1,0 +1,14 @@
+libraries/RF24-master/*
+sketch_*
+workspace/*
+*.lnk
+libraries/Arduino-DHT22-master/*
+libraries/Grove_AirQuality_Sensor/*
+libraries/Grove_Barometer_Sensor/*
+libraries/Grove_Temperature_And_Humidity_Sensor-master/*
+libraries/Low-Power-master/*
+libraries/Sodaq_BMP085/*
+libraries/Sodaq_SHT2x/*
+libraries/TimerOne/*
+libraries/readme.txt
+libraries/DHT_sensor_library/*

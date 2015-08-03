@@ -31,6 +31,7 @@ void setup() {
   radio.setChannel(RF_CHANNEL);
   radio.setPayloadSize(sizeof(payload_t));
   radio.setDataRate(RF24_2MBPS);
+  //radio.setAutoAck(false);
   radio.openReadingPipe(1,address);
   radio.startListening();
 

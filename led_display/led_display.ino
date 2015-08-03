@@ -8,6 +8,7 @@
 #define DATA_PIN 11
 #define CLOCK_PIN 13
 #define STROBE_PIN 4
+#define SS_PIN 5
 #define PWM_PIN 6
 
 #define byteAt(array, i, j) pgm_read_byte_near(array + i*4 + j)
@@ -721,27 +722,18 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Starting ...");
 
-  pinMode(7, OUTPUT);
-
-  unsigned long start = micros();
-  
-  __asm__ __volatile__("nop\n\t");
-  __asm__ __volatile__("nop\n\t");
-  __asm__ __volatile__("nop\n\t");
-  __asm__ __volatile__("nop\n\t");
-  Serial.println(micros() - start);
-  start = micros();
-  Serial.println(micros() - start);
-  
+  pinMode(5, OUTPUT);
+  digitalWrite(5, HIGH);
 
   pinMode(10, OUTPUT);
   SPI.usingInterrupt(1);
-  setupShiftRegistry(DATA_PIN, CLOCK_PIN, STROBE_PIN, PWM_PIN);
+  setupShiftRegistry(DATA_PIN, CLOCK_PIN, STROBE_PIN, PWM_PIN, SS_PIN);
   analogWrite(PWM_PIN, 128);
+
+  digitalWrite(5, LOW);
 
   Serial.println("Done.");
   Timer1.initialize(5000);
-  //Timer1.pwm(9, 512);
   Timer1.attachInterrupt(callback);
 }
 
@@ -760,7 +752,7 @@ void loop() {
     Serial.print(stamp);
     Serial.print(", new offset: ");
     Serial.println(offset);
-  }
+  } 
   
   toggle = !toggle;
   int32_t seconds = offset + (millis()+10)/1000;
@@ -817,12 +809,12 @@ void loop() {
         current[i][j] |= byteAt(extDown, i, j);*/
       }
       else {
-      /*  current[i][j] |= byteAt(pressureUp, i, j);
+        current[i][j] |= byteAt(pressureUp, i, j);
         current[i][j] |= byteAt(pressureEqal, i, j);
         current[i][j] |= byteAt(pressureDown, i, j);
         current[i][j] |= byteAt(sun, i, j);
         current[i][j] |= byteAt(clouds, i, j);
-        current[i][j] |= byteAt(rain, i, j);
+      /*  current[i][j] |= byteAt(rain, i, j);
         current[i][j] |= byteAt(lightning, i, j);
         
         current[i][j] |= arrayByteAt(int100, 1, i, j);
@@ -844,20 +836,10 @@ void loop() {
   unsigned long c = offset + millis();
   c = c % 1000;
   delay(1000 - c);
-
-  
-/*  for(int i = 0; i < 4; i++) {
-    shift(current[i][0], current[i][1], current[i][2], current[i][3], group[i]);
-    digitalWrite(7, HIGH);
-   // delayMicroseconds(1000000);
-    delay(1000);
-    Serial.println(".");
-    digitalWrite(7, LOW);
-  } */
 }
 
 
-void setupShiftRegistry(uint8_t data, uint8_t clk, uint8_t strobe, uint8_t pwm) {
+void setupShiftRegistry(uint8_t data, uint8_t clk, uint8_t strobe, uint8_t pwm, uint8_t ss) {
   pinMode(strobe, OUTPUT);
   digitalWrite(strobe, LOW);
   pinMode(data, OUTPUT);
@@ -866,14 +848,17 @@ void setupShiftRegistry(uint8_t data, uint8_t clk, uint8_t strobe, uint8_t pwm) 
   digitalWrite(clk, LOW);
   pinMode(pwm, OUTPUT);
   digitalWrite(pwm, LOW);
+  pinMode(ss, OUTPUT);
+  digitalWrite(ss, LOW);
 
-  shift(B00000000, B00000000, B00000000, B00000000, B00000000);
+  shift(B10000000, B00000000, B00000000, B00000000, B10000000);
 }
 
 
 void shift(byte b1, byte b2, byte b3, byte b4, byte b5) {
   digitalWrite(STROBE_PIN, LOW);
   digitalWrite(CLOCK_PIN, LOW);
+  digitalWrite(SS_PIN, HIGH);
   
  /* 
   shiftOut(DATA_PIN, CLOCK_PIN, LSBFIRST, b5);
@@ -892,5 +877,6 @@ void shift(byte b1, byte b2, byte b3, byte b4, byte b5) {
   SPI.transfer(b1);
   SPI.endTransaction();
 
+  digitalWrite(SS_PIN, LOW);
   digitalWrite(STROBE_PIN, HIGH);
 }
